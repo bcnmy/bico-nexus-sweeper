@@ -22,64 +22,64 @@ export const NexusSweeper: React.FC = () => {
 
   const {
     nexusAddress210,
-    nexusAddress220,
+    nexusAddress221,
     resolvingAccount,
     accountError,
   } = useNexusAccounts()
 
   const {
     tokens210,
-    tokens220,
+    tokens221,
     loadingTokens,
     tokenError,
     fetchTokens,
-    feeTokenOptions220,
-    selectedFeeTokenId220,
-    setSelectedFeeTokenId220,
-    selectedFeeToken220,
-  } = useTokens(nexusAddress210, nexusAddress220)
+    feeTokenOptions221,
+    selectedFeeTokenId221,
+    setSelectedFeeTokenId221,
+    selectedFeeToken221,
+  } = useTokens(nexusAddress210, nexusAddress221)
 
   const { sweepHistory, addEntry } = useSweepHistory()
 
   // Get data for selected version
   const isV210 = selectedVersion === '2.1.0'
-  const nexusAddress = isV210 ? nexusAddress210 : nexusAddress220
-  const tokens = isV210 ? tokens210 : tokens220
+  const nexusAddress = isV210 ? nexusAddress210 : nexusAddress221
+  const tokens = isV210 ? tokens210 : tokens221
 
-  // Check if v2.1.0 has only native tokens (needs EOA fee token like v2.2.0)
+  // Check if v2.1.0 has only native tokens (needs EOA fee token like v2.2.1)
   const v210OnlyNative = tokens210.length > 0 && tokens210.every((t) => t.isNative)
-  // Show fee selector when: v2.2.0 OR v2.1.0 with only native tokens
+  // Show fee selector when: v2.2.1 OR v2.1.0 with only native tokens
   const needsFeeSelector = !isV210 || v210OnlyNative
 
   // Filter fee token options to only show tokens from the same chains as dust tokens
   const filteredFeeTokenOptions = React.useMemo(() => {
-    if (!needsFeeSelector || tokens.length === 0) return feeTokenOptions220
+    if (!needsFeeSelector || tokens.length === 0) return feeTokenOptions221
     const dustChains = new Set(tokens.map((t) => t.chain))
-    return feeTokenOptions220.filter((feeToken) => dustChains.has(feeToken.chain))
-  }, [needsFeeSelector, tokens, feeTokenOptions220])
+    return feeTokenOptions221.filter((feeToken) => dustChains.has(feeToken.chain))
+  }, [needsFeeSelector, tokens, feeTokenOptions221])
 
   const {
     sweepState210,
     sweepError210,
     supertxHash210,
-    sweepState220,
-    sweepError220,
-    supertxHash220,
+    sweepState221,
+    sweepError221,
+    supertxHash221,
     handleSweep,
     isAnySweepBusy,
   } = useSweep({
     nexusAddress210,
-    nexusAddress220,
+    nexusAddress221,
     tokens210,
-    tokens220,
-    selectedFeeToken: selectedFeeToken220, // Used for v2.2.0 and v2.1.0 native-only
+    tokens221,
+    selectedFeeToken: selectedFeeToken221, // Used for v2.2.1 and v2.1.0 native-only
     onSweepSuccess: addEntry,
     onTokensRefresh: fetchTokens,
   })
 
-  const sweepState = isV210 ? sweepState210 : sweepState220
-  const sweepError = isV210 ? sweepError210 : sweepError220
-  const supertxHash = isV210 ? supertxHash210 : supertxHash220
+  const sweepState = isV210 ? sweepState210 : sweepState221
+  const sweepError = isV210 ? sweepError210 : sweepError221
+  const supertxHash = isV210 ? supertxHash210 : supertxHash221
 
   // Filter history by selected version
   const filteredHistory = React.useMemo(() => {
@@ -160,10 +160,10 @@ export const NexusSweeper: React.FC = () => {
       <SweepSection
         version={selectedVersion}
         tokens={tokens}
-        canSweep={needsFeeSelector ? tokens.length > 0 && feeTokenOptions220.length > 0 : tokens.length > 0}
-        feeTokenOptions={needsFeeSelector ? feeTokenOptions220 : undefined}
-        selectedFeeTokenId={needsFeeSelector ? selectedFeeTokenId220 : undefined}
-        onFeeTokenChange={needsFeeSelector ? setSelectedFeeTokenId220 : undefined}
+        canSweep={needsFeeSelector ? tokens.length > 0 && feeTokenOptions221.length > 0 : tokens.length > 0}
+        feeTokenOptions={needsFeeSelector ? feeTokenOptions221 : undefined}
+        selectedFeeTokenId={needsFeeSelector ? selectedFeeTokenId221 : undefined}
+        onFeeTokenChange={needsFeeSelector ? setSelectedFeeTokenId221 : undefined}
         loading={loadingTokens}
         error={tokenError}
         sweepState={sweepState}
@@ -178,9 +178,9 @@ export const NexusSweeper: React.FC = () => {
       <SweepHistory
         history={filteredHistory}
         supertxHash210={supertxHash210}
-        supertxHash220={supertxHash220}
+        supertxHash221={supertxHash221}
         sweepState210={sweepState210}
-        sweepState220={sweepState220}
+        sweepState221={sweepState221}
       />
     </div>
   )

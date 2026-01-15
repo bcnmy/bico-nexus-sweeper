@@ -32,7 +32,7 @@ import { TokenInput } from './components/TokenInput'
 import { ManualTokenList } from './components/ManualTokenList'
 import { useNexusAccounts, useSweepHistory } from './hooks'
 import type { SelectedVersion, SweepState } from './types'
-import { formatSupertxHash, getTokenId, sleep } from './utils'
+import { formatSupertxHash, getMEEVersionFromSelected, getTokenId, sleep } from './utils'
 
 export const ManualSweeper: React.FC = () => {
   const { isConnected, address: walletAddress } = useAccount()
@@ -43,7 +43,7 @@ export const ManualSweeper: React.FC = () => {
   const [selectedVersion, setSelectedVersion] = React.useState<SelectedVersion>('2.1.0')
   const [manualTokens, setManualTokens] = React.useState<TokenInfo[]>([])
 
-  // EOA tokens for fee token selection (v2.2.0)
+  // EOA tokens for fee token selection (v2.2.1)
   const [eoaTokens, setEoaTokens] = React.useState<Token[]>([])
   const [loadingEoaTokens, setLoadingEoaTokens] = React.useState(false)
   const [selectedFeeTokenId, setSelectedFeeTokenId] = React.useState<string | null>(null)
@@ -55,7 +55,7 @@ export const ManualSweeper: React.FC = () => {
 
   const {
     nexusAddress210,
-    nexusAddress220,
+    nexusAddress221,
     resolvingAccount,
     accountError,
   } = useNexusAccounts()
@@ -63,7 +63,7 @@ export const ManualSweeper: React.FC = () => {
   const { sweepHistory, addEntry } = useSweepHistory()
 
   const isV210 = selectedVersion === '2.1.0'
-  const nexusAddress = isV210 ? nexusAddress210 : nexusAddress220
+  const nexusAddress = isV210 ? nexusAddress210 : nexusAddress221
 
   // Fee token options (top 10 EOA tokens by USD)
   const feeTokenOptions = React.useMemo(() => {
@@ -165,7 +165,7 @@ export const ManualSweeper: React.FC = () => {
 
     // Check if only native tokens exist (no ERC20)
     const hasErc20Tokens = tokensToSweep.some((t) => !t.isNative)
-    // Use EOA mode when: v2.2.0 (always) OR v2.1.0 with only native tokens
+    // Use EOA mode when: v2.2.1 (always) OR v2.1.0 with only native tokens
     const useEoaMode = !isV210 || !hasErc20Tokens
 
     // For EOA mode, check fee token and switch chain if needed
@@ -195,7 +195,7 @@ export const ManualSweeper: React.FC = () => {
     setSupertxHash(null)
 
     try {
-      const meeVersion = isV210 ? MEEVersion.V2_1_0 : MEEVersion.V2_2_0
+      const meeVersion = getMEEVersionFromSelected(selectedVersion)
 
       // Get unique chain IDs from tokens
       const tokenChainIds = tokensToSweep.map((t) => t.chainId).filter(isSupportedChainId)
@@ -269,7 +269,7 @@ export const ManualSweeper: React.FC = () => {
       let hash: Hex
 
       if (useEoaMode && selectedFeeToken) {
-        // EOA trigger mode: v2.2.0 OR v2.1.0 with only native tokens
+        // EOA trigger mode: v2.2.1 OR v2.1.0 with only native tokens
         // Fee comes from EOA wallet, allowing full Nexus balance to be swept
         const feeTokenChainId = getChainIdFromDebankId(selectedFeeToken.chain)
 
@@ -347,7 +347,7 @@ export const ManualSweeper: React.FC = () => {
   const sweepableTokens = manualTokens.filter((t) => t.balance > 0n && t.isSupported)
   // Check if only native tokens exist in sweepable tokens
   const onlyNativeTokens = sweepableTokens.length > 0 && sweepableTokens.every((t) => t.isNative)
-  // Show fee selector when: v2.2.0 OR v2.1.0 with only native tokens
+  // Show fee selector when: v2.2.1 OR v2.1.0 with only native tokens
   const needsFeeSelector = !isV210 || onlyNativeTokens
   // Can sweep if: has tokens AND (doesn't need fee selector OR has fee options)
   const canSweep = sweepableTokens.length > 0 && (!needsFeeSelector || feeTokenOptions.length > 0)
@@ -499,7 +499,7 @@ export const ManualSweeper: React.FC = () => {
                 </div>
               )}
 
-              {/* Fee Token Selector - shown for v2.2.0 or v2.1.0 with only native tokens */}
+              {/* Fee Token Selector - shown for v2.2.1 or v2.1.0 with only native tokens */}
               {needsFeeSelector && feeTokenOptions.length > 0 && (
                 <FeeTokenSelector
                   tokens={feeTokenOptions}
@@ -515,7 +515,7 @@ export const ManualSweeper: React.FC = () => {
                   'w-full h-12 text-base font-bold tracking-wide text-white transition-all hover:scale-[1.01] active:scale-[0.99] rounded-xl shadow-lg',
                   isV210
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-indigo-500/20'
                 )}
                 disabled={isSweepBusy || !canSweep || !nexusAddress}
                 onClick={handleSweep}
@@ -541,9 +541,9 @@ export const ManualSweeper: React.FC = () => {
       <SweepHistory
         history={filteredHistory}
         supertxHash210={isV210 ? supertxHash : null}
-        supertxHash220={isV210 ? null : supertxHash}
+        supertxHash221={isV210 ? null : supertxHash}
         sweepState210={isV210 ? sweepState : 'idle'}
-        sweepState220={isV210 ? 'idle' : sweepState}
+        sweepState221={isV210 ? 'idle' : sweepState}
       />
     </div>
   )

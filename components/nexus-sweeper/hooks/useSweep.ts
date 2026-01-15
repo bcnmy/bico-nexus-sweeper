@@ -14,14 +14,14 @@ import { buildSweepInstructions, fromDebankToken, type SweepToken } from '@/lib/
 import type { Token } from '@/lib/debank/types'
 
 import type { SelectedVersion, SweepHistoryEntry, SweepState } from '../types'
-import { sleep } from '../utils'
+import { getMEEVersionFromSelected, sleep } from '../utils'
 
 interface UseSweepParams {
   nexusAddress210: Address | null
-  nexusAddress220: Address | null
+  nexusAddress221: Address | null
   tokens210: Token[]
-  tokens220: Token[]
-  /** Fee token for v2.2.0 (always required) and v2.1.0 when only native tokens exist */
+  tokens221: Token[]
+  /** Fee token for v2.2.1 (always required) and v2.1.0 when only native tokens exist */
   selectedFeeToken: Token | null
   onSweepSuccess: (entry: SweepHistoryEntry) => void
   onTokensRefresh: () => void
@@ -31,18 +31,18 @@ interface UseSweepReturn {
   sweepState210: SweepState
   sweepError210: string | null
   supertxHash210: string | null
-  sweepState220: SweepState
-  sweepError220: string | null
-  supertxHash220: string | null
+  sweepState221: SweepState
+  sweepError221: string | null
+  supertxHash221: string | null
   handleSweep: (version: SelectedVersion) => Promise<void>
   isAnySweepBusy: boolean
 }
 
 export const useSweep = ({
   nexusAddress210,
-  nexusAddress220,
+  nexusAddress221,
   tokens210,
-  tokens220,
+  tokens221,
   selectedFeeToken,
   onSweepSuccess,
   onTokensRefresh,
@@ -56,27 +56,27 @@ export const useSweep = ({
   const [sweepError210, setSweepError210] = React.useState<string | null>(null)
   const [supertxHash210, setSupertxHash210] = React.useState<string | null>(null)
 
-  const [sweepState220, setSweepState220] = React.useState<SweepState>('idle')
-  const [sweepError220, setSweepError220] = React.useState<string | null>(null)
-  const [supertxHash220, setSupertxHash220] = React.useState<string | null>(null)
+  const [sweepState221, setSweepState221] = React.useState<SweepState>('idle')
+  const [sweepError221, setSweepError221] = React.useState<string | null>(null)
+  const [supertxHash221, setSupertxHash221] = React.useState<string | null>(null)
 
   const handleSweep = React.useCallback(async (version: SelectedVersion) => {
-    const isV2 = version === '2.2.0'
-    const nexusAddress = isV2 ? nexusAddress220 : nexusAddress210
-    const tokens = isV2 ? tokens220 : tokens210
+    const isV210 = version === '2.1.0'
+    const nexusAddress = isV210 ? nexusAddress210 : nexusAddress221
+    const tokens = isV210 ? tokens210 : tokens221
 
     if (!walletClient || !nexusAddress || !walletAddress || tokens.length === 0) {
       return
     }
 
-    const setSweepState = isV2 ? setSweepState220 : setSweepState210
-    const setSweepError = isV2 ? setSweepError220 : setSweepError210
-    const setSupertxHash = isV2 ? setSupertxHash220 : setSupertxHash210
+    const setSweepState = isV210 ? setSweepState210 : setSweepState221
+    const setSweepError = isV210 ? setSweepError210 : setSweepError221
+    const setSupertxHash = isV210 ? setSupertxHash210 : setSupertxHash221
 
     // Check if only native tokens exist (no ERC20)
     const hasErc20Tokens = tokens.some((t) => !t.isNative)
-    // Use EOA mode when: v2.2.0 (always) OR v2.1.0 with only native tokens
-    const useEoaMode = isV2 || !hasErc20Tokens
+    // Use EOA mode when: v2.2.1 (always) OR v2.1.0 with only native tokens
+    const useEoaMode = !isV210 || !hasErc20Tokens
 
     // For EOA mode, check if fee token is selected and switch chain if needed
     if (useEoaMode) {
@@ -106,7 +106,7 @@ export const useSweep = ({
     setSupertxHash(null)
 
     try {
-      const meeVersion = isV2 ? MEEVersion.V2_2_0 : MEEVersion.V2_1_0
+      const meeVersion = getMEEVersionFromSelected(version)
 
       // Get unique chain IDs from tokens
       const tokenChainIds = tokens.map((t) => getChainIdFromDebankId(t.chain)).filter(isSupportedChainId)
@@ -131,6 +131,8 @@ export const useSweep = ({
           versionCheck: false,
         }
       })
+
+      console.log('chainConfigurations', chainConfigurations);
 
       // Create multichain Nexus account
       const nexusAccount = await toMultichainNexusAccount({
@@ -166,7 +168,7 @@ export const useSweep = ({
       let hash: Hex
 
       if (useEoaMode && selectedFeeToken) {
-        // EOA trigger mode: v2.2.0 OR v2.1.0 with only native tokens
+        // EOA trigger mode: v2.2.1 OR v2.1.0 with only native tokens
         // Fee comes from EOA wallet, allowing full Nexus balance to be swept
         const feeTokenChainId = getChainIdFromDebankId(selectedFeeToken.chain)
 
@@ -243,7 +245,7 @@ export const useSweep = ({
       setSweepState('error')
       setSweepError(error instanceof Error ? error.message : 'Sweep failed. Please try again.')
     }
-  }, [walletClient, nexusAddress210, nexusAddress220, walletAddress, tokens210, tokens220, selectedFeeToken, currentChainId, switchChainAsync, onSweepSuccess, onTokensRefresh])
+  }, [walletClient, nexusAddress210, nexusAddress221, walletAddress, tokens210, tokens221, selectedFeeToken, currentChainId, switchChainAsync, onSweepSuccess, onTokensRefresh])
 
   // Reset sweep states when wallet disconnects or changes
   React.useEffect(() => {
@@ -251,23 +253,23 @@ export const useSweep = ({
       setSweepState210('idle')
       setSweepError210(null)
       setSupertxHash210(null)
-      setSweepState220('idle')
-      setSweepError220(null)
-      setSupertxHash220(null)
+      setSweepState221('idle')
+      setSweepError221(null)
+      setSupertxHash221(null)
     }
   }, [walletAddress])
 
   const isSweepBusy210 = sweepState210 === 'quote' || sweepState210 === 'awaiting-signature' || sweepState210 === 'executing'
-  const isSweepBusy220 = sweepState220 === 'quote' || sweepState220 === 'awaiting-signature' || sweepState220 === 'executing'
-  const isAnySweepBusy = isSweepBusy210 || isSweepBusy220
+  const isSweepBusy221 = sweepState221 === 'quote' || sweepState221 === 'awaiting-signature' || sweepState221 === 'executing'
+  const isAnySweepBusy = isSweepBusy210 || isSweepBusy221
 
   return {
     sweepState210,
     sweepError210,
     supertxHash210,
-    sweepState220,
-    sweepError220,
-    supertxHash220,
+    sweepState221,
+    sweepError221,
+    supertxHash221,
     handleSweep,
     isAnySweepBusy,
   }

@@ -10,17 +10,17 @@ import { formatSupertxHash } from '../utils'
 interface SweepHistoryProps {
   history: SweepHistoryEntry[]
   supertxHash210: string | null
-  supertxHash220: string | null
+  supertxHash221: string | null
   sweepState210: SweepState
-  sweepState220: SweepState
+  sweepState221: SweepState
 }
 
 export const SweepHistory: React.FC<SweepHistoryProps> = ({
   history,
   supertxHash210,
-  supertxHash220,
+  supertxHash221,
   sweepState210,
-  sweepState220,
+  sweepState221,
 }) => {
   if (history.length === 0) return null
 
@@ -34,9 +34,9 @@ export const SweepHistory: React.FC<SweepHistoryProps> = ({
         <div className="space-y-3">
           {history.map((entry) => {
             const isLatest210 = entry.hash === supertxHash210
-            const isLatest220 = entry.hash === supertxHash220
-            const isLatest = isLatest210 || isLatest220
-            const latestSweepState = isLatest210 ? sweepState210 : isLatest220 ? sweepState220 : 'idle'
+            const isLatest221 = entry.hash === supertxHash221
+            const isLatest = isLatest210 || isLatest221
+            const latestSweepState = isLatest210 ? sweepState210 : isLatest221 ? sweepState221 : 'idle'
             const date = new Date(entry.timestamp)
             const formattedDate = date.toLocaleDateString(undefined, {
               month: 'short',

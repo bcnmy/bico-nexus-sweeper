@@ -1,7 +1,7 @@
 import type { Token } from '@/lib/debank/types'
 
 export type SweepState = 'idle' | 'quote' | 'awaiting-signature' | 'executing' | 'success' | 'error'
-export type SelectedVersion = '2.1.0' | '2.2.0'
+export type SelectedVersion = '2.1.0' | '2.2.1'
 
 export interface SweepHistoryEntry {
   hash: string
