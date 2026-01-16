@@ -10,7 +10,7 @@ interface VersionSelectorProps {
   onVersionChange: (version: SelectedVersion) => void
 }
 
-const versions: SelectedVersion[] = ['2.1.0', '2.2.0']
+const versions: SelectedVersion[] = ['2.1.0', '2.2.1']
 
 export const VersionSelector: React.FC<VersionSelectorProps> = ({
   selectedVersion,
@@ -39,18 +39,18 @@ export const VersionSelector: React.FC<VersionSelectorProps> = ({
           'flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-left transition-all',
           selectedVersion === '2.1.0'
             ? 'border-emerald-200 bg-emerald-50 hover:border-emerald-300'
-            : 'border-blue-200 bg-blue-50 hover:border-blue-300'
+            : 'border-indigo-200 bg-indigo-50 hover:border-indigo-300'
         )}
       >
         <span className={cn(
           'text-base font-bold',
-          selectedVersion === '2.1.0' ? 'text-emerald-700' : 'text-blue-700'
+          selectedVersion === '2.1.0' ? 'text-emerald-700' : 'text-indigo-700'
         )}>
           v{selectedVersion}
         </span>
         <ChevronDown className={cn(
           'h-4 w-4 transition-transform',
-          selectedVersion === '2.1.0' ? 'text-emerald-500' : 'text-blue-500',
+          selectedVersion === '2.1.0' ? 'text-emerald-500' : 'text-indigo-500',
           isOpen && 'rotate-180'
         )} />
       </button>
@@ -74,14 +74,14 @@ export const VersionSelector: React.FC<VersionSelectorProps> = ({
               >
                 <span className={cn(
                   'font-semibold',
-                  version === '2.1.0' ? 'text-emerald-700' : 'text-blue-700'
+                  version === '2.1.0' ? 'text-emerald-700' : 'text-indigo-700'
                 )}>
                   v{version}
                 </span>
                 {isSelected && (
                   <Check className={cn(
                     'h-4 w-4',
-                    version === '2.1.0' ? 'text-emerald-500' : 'text-blue-500'
+                    version === '2.1.0' ? 'text-emerald-500' : 'text-indigo-500'
                   )} />
                 )}
               </button>

@@ -27,7 +27,7 @@ export const SweepSection: React.FC<SweepSectionProps> = ({
   onSweep,
   disabled,
 }) => {
-  const isV2 = version === '2.2.0'
+  const isV221 = version === '2.2.1'
   const totalValue = tokens.reduce((sum, t) => sum + t.amount * t.price, 0)
   const isSweepBusy = sweepState === 'quote' || sweepState === 'awaiting-signature' || sweepState === 'executing'
   const meeScanUrl = supertxHash ? `https://meescan.biconomy.io/details/${supertxHash}` : null
@@ -146,8 +146,8 @@ export const SweepSection: React.FC<SweepSectionProps> = ({
             <Button
               className={cn(
                 'w-full h-12 text-base font-bold tracking-wide text-white transition-all hover:scale-[1.01] active:scale-[0.99] rounded-xl shadow-lg',
-                isV2
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'
+                isV221
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-indigo-500/20'
                   : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/20'
               )}
               disabled={isSweepBusy || !canSweep || disabled}
