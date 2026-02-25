@@ -304,6 +304,9 @@ export const ManualSweeper: React.FC = () => {
 
         const quote = await meeClient.getQuote({
           instructions,
+          simulation: {
+            simulate: true,
+          },
           feeToken: {
             address: feeToken.address,
             chainId: feeToken.chainId,

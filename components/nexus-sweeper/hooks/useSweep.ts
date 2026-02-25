@@ -210,6 +210,9 @@ export const useSweep = ({
 
         const quote = await meeClient.getQuote({
           instructions,
+          simulation: {
+            simulate: true,
+          },
           feeToken: {
             address: feeToken.tokenAddress,
             chainId: feeChainId,
