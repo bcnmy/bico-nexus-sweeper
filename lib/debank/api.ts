@@ -1,7 +1,7 @@
 import { zeroAddress, type Address } from 'viem'
 
 import { DEBANK_API_BASE, DEBANK_HEADERS } from './constants'
-import type { Chain, CompletePortfolio, PortfolioSummary, Token, TotalBalance } from './types'
+import type { CompletePortfolio, PortfolioSummary, Token, TotalBalance } from './types'
 import { getChainIdFromDebankId, isSupportedChainId } from '@/lib/chains'
 
 const extractAddressFromValue = (value: string | null | undefined): Address | null => {

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import Image from 'next/image'
 import { Check, ChevronDown } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -14,9 +15,12 @@ const renderTokenIcon = (token: Token) => {
   const tokenLogo = token.logo_url && token.logo_url.length > 0 ? token.logo_url : null
 
   return tokenLogo ? (
-    <img
+    <Image
       src={tokenLogo}
       alt={`${tokenSymbol} logo`}
+      width={24}
+      height={24}
+      unoptimized
       className="h-6 w-6 rounded-full border border-slate-200 object-cover"
     />
   ) : (

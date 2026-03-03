@@ -132,6 +132,13 @@ export const SweepSection: React.FC<SweepSectionProps> = ({
               </div>
             )}
 
+            {/* When fee token selector is needed (v2.1.0 native-only) but no EOA tokens available */}
+            {feeTokenOptions && feeTokenOptions.length === 0 && tokens.length > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                To sweep with v2.1.0 when you only have native tokens, you need a token in your <strong>connected wallet</strong> to pay for the transaction. Add some native token or USDC on a supported network, then click Refresh.
+              </div>
+            )}
+
             {/* Fee Token Selector - shown when feeTokenOptions is provided */}
             {feeTokenOptions && feeTokenOptions.length > 0 && onFeeTokenChange && (
               <FeeTokenSelector
