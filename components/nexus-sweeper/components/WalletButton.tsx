@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Image from 'next/image'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { ChevronDown, AlertTriangle } from 'lucide-react'
 
@@ -71,9 +72,12 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ showBalance = false 
                     ) : (
                       <>
                         {chain.hasIcon && chain.iconUrl && (
-                          <img
+                          <Image
                             alt={chain.name ?? 'Chain icon'}
                             src={chain.iconUrl}
+                            width={20}
+                            height={20}
+                            unoptimized
                             className="h-5 w-5 rounded-full"
                           />
                         )}
@@ -90,9 +94,12 @@ export const WalletButton: React.FC<WalletButtonProps> = ({ showBalance = false 
                     className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                   >
                     {account.ensAvatar && (
-                      <img
+                      <Image
                         alt="ENS Avatar"
                         src={account.ensAvatar}
+                        width={20}
+                        height={20}
+                        unoptimized
                         className="h-5 w-5 rounded-full"
                       />
                     )}

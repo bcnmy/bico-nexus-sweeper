@@ -5,7 +5,6 @@ import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
 import { createPublicClient, http, type Address, type Hex } from 'viem'
 import { ArrowDown, ExternalLink, Loader2, Wallet } from 'lucide-react'
 import {
-  MEEVersion,
   getMEEVersion,
   toMultichainNexusAccount,
   createMeeClient,
@@ -16,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { getRpcUrl } from '@/lib/rpc'
 import { buildSweepInstructions, fromTokenInfo, type SweepToken } from '@/lib/sweep'
-import { SUPPORTED_CHAINS, SUPPORTED_DEBANK_CHAIN_IDS, isSupportedChainId, getChainIdFromDebankId, getDebankChainIdentifier } from '@/lib/chains'
+import { SUPPORTED_CHAINS, SUPPORTED_DEBANK_CHAIN_IDS, isSupportedChainId, getChainIdFromDebankId } from '@/lib/chains'
 import { fetchPortfolio, selectEligibleTokens } from '@/lib/debank/api'
 import type { Token } from '@/lib/debank/types'
 import { fetchTokenInfo, type TokenInfo } from '@/lib/tokens'
@@ -43,9 +42,9 @@ export const ManualSweeper: React.FC = () => {
   const [selectedVersion, setSelectedVersion] = React.useState<SelectedVersion>('2.1.0')
   const [manualTokens, setManualTokens] = React.useState<TokenInfo[]>([])
 
-  // EOA tokens for fee token selection (v2.2.1)
+  // EOA tokens for fee token selection (v2.1.0 fusion mode when only native tokens)
   const [eoaTokens, setEoaTokens] = React.useState<Token[]>([])
-  const [loadingEoaTokens, setLoadingEoaTokens] = React.useState(false)
+  const [, setLoadingEoaTokens] = React.useState(false)
   const [selectedFeeTokenId, setSelectedFeeTokenId] = React.useState<string | null>(null)
 
   // Sweep state
@@ -165,8 +164,8 @@ export const ManualSweeper: React.FC = () => {
 
     // Check if only native tokens exist (no ERC20)
     const hasErc20Tokens = tokensToSweep.some((t) => !t.isNative)
-    // Use EOA mode when: v2.2.1 (always) OR v2.1.0 with only native tokens
-    const useEoaMode = !isV210 || !hasErc20Tokens
+    // Use EOA/fusion mode only for v2.1.0 when there are no ERC20s (native runtime balance doesn't work for v2.1.0)
+    const useEoaMode = selectedVersion === '2.1.0' && !hasErc20Tokens
 
     // For EOA mode, check fee token and switch chain if needed
     if (useEoaMode) {
@@ -200,7 +199,7 @@ export const ManualSweeper: React.FC = () => {
       // Get unique chain IDs from tokens
       const tokenChainIds = tokensToSweep.map((t) => t.chainId).filter(isSupportedChainId)
 
-      // For EOA mode, also include the fee token's chain (needed for deployment lookup)
+      // For EOA/fusion mode only, include the fee token's chain (needed for deployment lookup)
       if (useEoaMode && selectedFeeToken) {
         const feeChainId = getChainIdFromDebankId(selectedFeeToken.chain)
         if (feeChainId && isSupportedChainId(feeChainId)) {
@@ -269,7 +268,7 @@ export const ManualSweeper: React.FC = () => {
       let hash: Hex
 
       if (useEoaMode && selectedFeeToken) {
-        // EOA trigger mode: v2.2.1 OR v2.1.0 with only native tokens
+        // EOA trigger mode: v2.1.0 with only native tokens (native runtime balance not supported)
         // Fee comes from EOA wallet, allowing full Nexus balance to be swept
         const feeTokenChainId = getChainIdFromDebankId(selectedFeeToken.chain)
 
@@ -297,16 +296,19 @@ export const ManualSweeper: React.FC = () => {
         const result = await meeClient.executeSignedQuote({ signedQuote })
         hash = result.hash
       } else {
-        // Smart Account mode: v2.1.0 with ERC20 tokens available
-        // Use first ERC20 token as fee
+        // Smart Account pays fee: getQuote with fee token = one of the swept tokens (runtime balances)
+        // v2.2.1: any token works (full runtime balance support). v2.1.0: only ERC20 (native runtime not supported).
         const erc20Tokens = tokensToSweep.filter((t) => !t.isNative)
-        const feeToken = erc20Tokens[0]
+        const feeTokenFromSweep = erc20Tokens[0] ?? tokensToSweep[0]
 
         const quote = await meeClient.getQuote({
           instructions,
+          simulation: {
+            simulate: true,
+          },
           feeToken: {
-            address: feeToken.address,
-            chainId: feeToken.chainId,
+            address: feeTokenFromSweep.address,
+            chainId: feeTokenFromSweep.chainId,
           },
         })
 
@@ -347,8 +349,8 @@ export const ManualSweeper: React.FC = () => {
   const sweepableTokens = manualTokens.filter((t) => t.balance > 0n && t.isSupported)
   // Check if only native tokens exist in sweepable tokens
   const onlyNativeTokens = sweepableTokens.length > 0 && sweepableTokens.every((t) => t.isNative)
-  // Show fee selector when: v2.2.1 OR v2.1.0 with only native tokens
-  const needsFeeSelector = !isV210 || onlyNativeTokens
+  // Show fee selector only for v2.1.0 when only native tokens (fusion mode; EOA must pay fee)
+  const needsFeeSelector = isV210 && onlyNativeTokens
   // Can sweep if: has tokens AND (doesn't need fee selector OR has fee options)
   const canSweep = sweepableTokens.length > 0 && (!needsFeeSelector || feeTokenOptions.length > 0)
 
@@ -499,7 +501,7 @@ export const ManualSweeper: React.FC = () => {
                 </div>
               )}
 
-              {/* Fee Token Selector - shown for v2.2.1 or v2.1.0 with only native tokens */}
+              {/* Fee Token Selector - only for v2.1.0 with only native tokens (fusion mode) */}
               {needsFeeSelector && feeTokenOptions.length > 0 && (
                 <FeeTokenSelector
                   tokens={feeTokenOptions}

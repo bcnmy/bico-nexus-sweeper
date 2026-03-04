@@ -46,17 +46,10 @@ export const NexusSweeper: React.FC = () => {
   const nexusAddress = isV210 ? nexusAddress210 : nexusAddress221
   const tokens = isV210 ? tokens210 : tokens221
 
-  // Check if v2.1.0 has only native tokens (needs EOA fee token like v2.2.1)
+  // Check if v2.1.0 has only native tokens (fusion mode: EOA must pay fee)
   const v210OnlyNative = tokens210.length > 0 && tokens210.every((t) => t.isNative)
-  // Show fee selector when: v2.2.1 OR v2.1.0 with only native tokens
-  const needsFeeSelector = !isV210 || v210OnlyNative
-
-  // Filter fee token options to only show tokens from the same chains as dust tokens
-  const filteredFeeTokenOptions = React.useMemo(() => {
-    if (!needsFeeSelector || tokens.length === 0) return feeTokenOptions221
-    const dustChains = new Set(tokens.map((t) => t.chain))
-    return feeTokenOptions221.filter((feeToken) => dustChains.has(feeToken.chain))
-  }, [needsFeeSelector, tokens, feeTokenOptions221])
+  // Show fee selector only for v2.1.0 when only native tokens (fusion mode)
+  const needsFeeSelector = isV210 && v210OnlyNative
 
   const {
     sweepState210,
@@ -72,7 +65,7 @@ export const NexusSweeper: React.FC = () => {
     nexusAddress221,
     tokens210,
     tokens221,
-    selectedFeeToken: selectedFeeToken221, // Used for v2.2.1 and v2.1.0 native-only
+    selectedFeeToken: selectedFeeToken221, // Used for v2.1.0 native-only (fusion mode)
     onSweepSuccess: addEntry,
     onTokensRefresh: fetchTokens,
   })

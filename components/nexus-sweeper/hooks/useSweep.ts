@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
 import { http, type Address, type Hex } from 'viem'
 import {
-  MEEVersion,
   getMEEVersion,
   toMultichainNexusAccount,
   createMeeClient,
@@ -21,7 +20,7 @@ interface UseSweepParams {
   nexusAddress221: Address | null
   tokens210: Token[]
   tokens221: Token[]
-  /** Fee token for v2.2.1 (always required) and v2.1.0 when only native tokens exist */
+  /** Fee token for v2.1.0 when only native tokens exist (fusion mode) */
   selectedFeeToken: Token | null
   onSweepSuccess: (entry: SweepHistoryEntry) => void
   onTokensRefresh: () => void
@@ -75,8 +74,8 @@ export const useSweep = ({
 
     // Check if only native tokens exist (no ERC20)
     const hasErc20Tokens = tokens.some((t) => !t.isNative)
-    // Use EOA mode when: v2.2.1 (always) OR v2.1.0 with only native tokens
-    const useEoaMode = !isV210 || !hasErc20Tokens
+    // Use EOA/fusion mode only for v2.1.0 when there are no ERC20s (native runtime balance doesn't work for v2.1.0)
+    const useEoaMode = version === '2.1.0' && !hasErc20Tokens
 
     // For EOA mode, check if fee token is selected and switch chain if needed
     if (useEoaMode) {
@@ -108,10 +107,10 @@ export const useSweep = ({
     try {
       const meeVersion = getMEEVersionFromSelected(version)
 
-      // Get unique chain IDs from tokens
+      // Get unique chain IDs from tokens (for EOA mode also include fee token's chain)
       const tokenChainIds = tokens.map((t) => getChainIdFromDebankId(t.chain)).filter(isSupportedChainId)
 
-      // For EOA mode, also include the fee token's chain (needed for deployment lookup)
+      // For EOA/fusion mode only, include the fee token's chain (needed for deployment lookup)
       if (useEoaMode && selectedFeeToken) {
         const feeChainId = getChainIdFromDebankId(selectedFeeToken.chain)
         if (feeChainId && isSupportedChainId(feeChainId)) {
@@ -131,8 +130,6 @@ export const useSweep = ({
           versionCheck: false,
         }
       })
-
-      console.log('chainConfigurations', chainConfigurations);
 
       // Create multichain Nexus account
       const nexusAccount = await toMultichainNexusAccount({
@@ -168,7 +165,7 @@ export const useSweep = ({
       let hash: Hex
 
       if (useEoaMode && selectedFeeToken) {
-        // EOA trigger mode: v2.2.1 OR v2.1.0 with only native tokens
+        // EOA trigger mode: v2.1.0 with only native tokens (native runtime balance not supported)
         // Fee comes from EOA wallet, allowing full Nexus balance to be swept
         const feeTokenChainId = getChainIdFromDebankId(selectedFeeToken.chain)
 
@@ -198,20 +195,22 @@ export const useSweep = ({
         const result = await meeClient.executeSignedQuote({ signedQuote })
         hash = result.hash
       } else {
-        // Smart Account mode: v2.1.0 with ERC20 tokens available
-        // Use first ERC20 token as fee (sorted by USD value from DeBank)
+        // Smart Account pays fee: getQuote with fee token = one of the swept tokens (runtime balances)
+        // v2.2.1: any token works (full runtime balance support). v2.1.0: only ERC20 (native runtime not supported).
         const erc20Tokens = tokens.filter((t) => !t.isNative)
-        const feeToken = erc20Tokens[0]
-        const feeChainId = getChainIdFromDebankId(feeToken.chain)
-
-        if (!feeChainId || !feeToken.tokenAddress) {
+        const feeTokenFromSweep = erc20Tokens[0] ?? tokens[0]
+        const feeChainId = getChainIdFromDebankId(feeTokenFromSweep.chain)
+        if (!feeChainId || !feeTokenFromSweep.tokenAddress) {
           throw new Error('No valid fee token found')
         }
 
         const quote = await meeClient.getQuote({
           instructions,
+          simulation: {
+            simulate: true,
+          },
           feeToken: {
-            address: feeToken.tokenAddress,
+            address: feeTokenFromSweep.tokenAddress,
             chainId: feeChainId,
           },
         })

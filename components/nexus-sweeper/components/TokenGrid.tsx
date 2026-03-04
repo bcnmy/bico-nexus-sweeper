@@ -1,4 +1,5 @@
 import * as React from 'react'
+import Image from 'next/image'
 
 import { formatUSD } from '@/lib/utils'
 import { getChainIdFromDebankId, getChainName } from '@/lib/chains'
@@ -24,9 +25,12 @@ export const TokenGrid: React.FC<TokenGridProps> = ({ tokens }) => (
         >
           <div className="relative h-10 w-10 shrink-0">
             {tokenLogo ? (
-              <img
+              <Image
                 src={tokenLogo}
                 alt={`${tokenSymbol} logo`}
+                width={40}
+                height={40}
+                unoptimized
                 className="h-10 w-10 rounded-full border border-slate-200 object-cover"
               />
             ) : (
